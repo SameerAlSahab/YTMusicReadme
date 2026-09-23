@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/process-music.js": { "maxDuration": 15 },
+    "api/widget.js": { "maxDuration": 15 }
+  }
+}

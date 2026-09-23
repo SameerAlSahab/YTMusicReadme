@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awesome Git Widgets</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1><i>Awesome </i>Git Widgets</h1>
+<p><b>(1)Awesome</b> Music Widgets <yt>YouTube Music</yt> <br></p>    
+
+<yt>Paste a Youtube Music URL //Single Song, not Playlist//</yt> <br>
+<input type="text" id="urlInput" placeholder="https://music.youtube.com/watch?v=.......">
+<button id="processBtn">Load Music</button>
+
+<div id="previewCard" style="margin-top: 20px; display: none; border: 1px solid #ccc; padding: 15px; border-radius: 10px; max-width: 350px;">
+    <h3>Widget Output Preview:</h3>
+    <img id="coverArt" src="" alt="Album Cover" style="width: 150px; height: 150px; border-radius: 8px; object-fit: cover;">
+    <p><b>Title:</b> <span id="outTitle"></span></p>
+    <p><b>Artist:</b> <span id="outArtist"></span></p>
+</div>
+
+<div id="widgetSection" style="display: none; margin-top: 25px; max-width: 420px;">
+    <h3>README Widget Preview</h3>
+    <p style="font-size: 13px; color: #555;">Clicking this widget in your README opens the song on YouTube Music. The visualizer is cosmetic (no real audio in a README).</p>
+    <img id="widgetPreview" src="" alt="Now Playing widget" style="max-width: 100%; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); display: block;">
+    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="copyMarkdownBtn">Copy Markdown</button>
+        <button id="copyHtmlBtn">Copy HTML</button>
+    </div>
+    <p id="copyStatus" style="font-size: 12px; color: green; min-height: 16px; margin-top: 6px;"></p>
+</div>
+
+<p>Developed with <i>love by </i>Sameer Al Sahab.</p>
+
+<a href="https://github.com/SameerAlSahab/AwesomeGitWidgets" class="git-repo">
+<button>Star the Repo, your day will be good; I promise</button>
+</a>
+
+<script>
+    let currentSongUrl = '';
+
+    document.getElementById('processBtn').addEventListener('click', async () => {
+        const url = document.getElementById('urlInput').value;
+        if(!url) return alert('Please enter a valid URL!');
+
+        try {
+            const response = await fetch('/api/process-music', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            
+            const data = await response.json();
+            if(data.error) throw new Error(data.error);
+
+            document.getElementById('outTitle').innerText = data.title;
+            document.getElementById('outArtist').innerText = data.artist;
+            document.getElementById('coverArt').src = data.art_path;
+            document.getElementById('previewCard').style.display = 'block';
+
+          
+            currentSongUrl = url;
+            const widgetSrc = `${window.location.origin}/api/widget?url=${encodeURIComponent(url)}`;
+            document.getElementById('widgetPreview').src = widgetSrc;
+            document.getElementById('widgetSection').style.display = 'block';
+            document.getElementById('copyStatus').innerText = '';
+
+        } catch(err) {
+            alert('Error: ' + err.message);
+        }
+    });
+
+    function buildSnippets() {
+        const widgetSrc = `${window.location.origin}/api/widget?url=${encodeURIComponent(currentSongUrl)}`;
+        const markdown = `[![Now Playing](${widgetSrc})](${currentSongUrl})`;
+        const html = `<a href="${currentSongUrl}"><img src="${widgetSrc}" alt="Now Playing" /></a>`;
+        return { markdown, html };
+    }
+
+    document.getElementById('copyMarkdownBtn').addEventListener('click', async () => {
+        if (!currentSongUrl) return;
+        const { markdown } = buildSnippets();
+        await navigator.clipboard.writeText(markdown);
+        document.getElementById('copyStatus').innerText = 'Markdown copied to clipboard!';
+    });
+
+    document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
+        if (!currentSongUrl) return;
+        const { html } = buildSnippets();
+        await navigator.clipboard.writeText(html);
+        document.getElementById('copyStatus').innerText = 'HTML copied to clipboard!';
+    });
+</script>
+
+</body>
+</html>
